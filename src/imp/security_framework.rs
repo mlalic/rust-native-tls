@@ -198,12 +198,29 @@ impl TlsConnector {
                       -> Result<TlsStream<S>, HandshakeError<S>>
         where S: io::Read + io::Write
     {
+        self._connect(Some(domain), stream)
+    }
+
+    pub fn connect_no_domain<S>(&self, stream: S) -> Result<TlsStream<S>, HandshakeError<S>>
+        where S: io::Read + io::Write
+    {
+        self._connect(None, stream)
+    }
+
+    fn _connect<S>(&self,
+                   domain: Option<&str>,
+                   stream: S)
+                   -> Result<TlsStream<S>, HandshakeError<S>>
+        where S: io::Read + io::Write
+    {
         let mut ctx = try!(SslContext::new(ProtocolSide::Client, ConnectionType::Stream));
         try!(ctx.set_protocol_version_enabled(SslProtocol::All, false));
         for protocol in &self.protocols {
             try!(ctx.set_protocol_version_enabled(clone_protocol(protocol), true));
         }
-        try!(ctx.set_peer_domain_name(domain));
+        if let Some(domain) = domain {
+            try!(ctx.set_peer_domain_name(domain));
+        }
         if let Some(pkcs12) = self.pkcs12.as_ref() {
             try!(ctx.set_certificate(&pkcs12.identity, &pkcs12.chain));
         }
