@@ -154,6 +154,12 @@ impl TlsConnectorBuilder {
         Ok(())
     }
 
+    #[cfg(all(feature = "alpn", not(any(target_os = "windows", target_os = "macos"))))]
+    pub fn supported_alpn_protocols(&mut self, protocols: &[&[u8]]) -> Result<(), Error> {
+        self.0.builder_mut().set_alpn_protocols(protocols)?;
+        Ok(())
+    }
+
     pub fn build(self) -> Result<TlsConnector, Error> {
         Ok(TlsConnector(self.0.build()))
     }
@@ -199,6 +205,12 @@ pub struct TlsAcceptorBuilder(SslAcceptorBuilder);
 impl TlsAcceptorBuilder {
     pub fn supported_protocols(&mut self, protocols: &[Protocol]) -> Result<(), Error> {
         supported_protocols(protocols, self.0.builder_mut());
+        Ok(())
+    }
+
+    #[cfg(all(feature = "alpn", not(any(target_os = "windows", target_os = "macos"))))]
+    pub fn supported_alpn_protocols(&mut self, protocols: &[&[u8]]) -> Result<(), Error> {
+        self.0.builder_mut().set_alpn_protocols(protocols)?;
         Ok(())
     }
 
@@ -278,6 +290,11 @@ impl<S: io::Read + io::Write> TlsStream<S> {
 
     pub fn get_mut(&mut self) -> &mut S {
         self.0.get_mut()
+    }
+
+    #[cfg(all(feature = "alpn", not(any(target_os = "windows", target_os = "macos"))))]
+    pub fn get_alpn_protocol(&self) -> Option<&[u8]> {
+        self.0.ssl().selected_alpn_protocol()
     }
 }
 

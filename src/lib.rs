@@ -322,6 +322,12 @@ impl TlsConnectorBuilder {
         Ok(self)
     }
 
+    #[cfg(all(feature = "alpn", not(any(target_os = "windows", target_os = "macos"))))]
+    pub fn supported_alpn_protocols(&mut self, protocols: &[&[u8]]) -> Result<()> {
+        self.0.supported_alpn_protocols(protocols)?;
+        Ok(())
+    }
+
     /// Consumes the builder, returning a `TlsConnector`.
     pub fn build(self) -> Result<TlsConnector> {
         let connector = try!(self.0.build());
